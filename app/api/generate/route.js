@@ -1,41 +1,36 @@
-
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
 export async function POST(req) {
   const body = await req.json();
 
-  const prompt = `
-  Create a professional ATS-optimized CV.
+  const response = await fetch(
+    'https://api.groq.com/openai/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama3-8b-8192',
+        messages: [
+          {
+            role: 'user',
+            content: `
+Create a professional ATS resume.
 
-  Name: ${body.name}
-  Country: ${body.country}
-  Job: ${body.job}
-  Experience: ${body.experience}
+Name: ${body.name}
+Country: ${body.country}
+Job: ${body.job}
+Experience: ${body.experience}
+`
+          }
+        ]
+      })
+    }
+  );
 
-  Rules:
-  - Professional tone
-  - Country localized
-  - ATS optimized
-  - Strong action verbs
-  - Modern structure
-  - Include summary and skills
-  `;
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'user',
-        content: prompt
-      }
-    ]
-  });
+  const data = await response.json();
 
   return Response.json({
-    cv: response.choices[0].message.content
+    cv: data.choices[0].message.content
   });
 }
